@@ -1,5 +1,5 @@
 Instalar MediaReducer:
-	ln -s "/Users/fernandoteubl/Tresors/Yaals/Projects/Released/MediaReducer/mreducer.sh" "/usr/local/bin/mreducer"
+	ln -s "<path_to_this_repository>/mreducer.sh" "/usr/local/bin/mreducer"
 
 
 Configurar Terminal para fechar sem perguntar:
