@@ -287,6 +287,7 @@ echo "..."
 # Processing all files in list ...
 echo "Processing..."
 for filename in "${listFiles[@]}"; do
+	filename=$(python -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$filename")
 	extFilename=$(echo "${filename##*.}" | tr '[:upper:]' '[:lower:]')
 	dirFilename=$(dirname "$filename")
 	baseFilename=$(basename "$filename")
@@ -320,15 +321,20 @@ for filename in "${listFiles[@]}"; do
 
 	# Check if need to rename
 	do_rename=false
-	newPathFilename="${filename}"
+	if [ $do_resize = true -a $isVideo = true ]; then
+		dotVideoExtensionOutput=".${videoExtensionOutput}"
+		newPathFilename=$( echo "${filename}" | sed  -E "s/.[a-z]{3}$/${dotVideoExtensionOutput}/" )
+		if [ "$filename" != "$newPathFilename" ]; then
+			do_rename=true
+		fi
+	else
+		newPathFilename="${filename}"
+	fi
 	if [ $renameFiles = true ]; then
-		timestamp=$( getTimestamp "$filename" $isVideo $forceToRecreateFiles )
+		timestamp=$( getTimestamp "$newPathFilename" $isVideo $forceToRecreateFiles )
 		if [ "$timestamp" != "" ]; then
-			if [ $isVideo = true -a do_resize = false ]; then
-				extFilename=$videoExtensionOutput
-			fi
 			newFilename="$timestamp.$extFilename"
-			if [ "$filename" != "$dirFilename/$newFilename" ]; then
+			if [ "$newPathFilename" != "$dirFilename/$newFilename" ]; then
 				do_rename=true
 				if [[ -e "${dirFilename}/${newFilename}" ]]; then
 					for((i=1;i<9999;++i)); do
@@ -341,9 +347,6 @@ for filename in "${listFiles[@]}"; do
 				newPathFilename="$dirFilename/$newFilename"
 			fi
 		fi
-	elif [ $isVideo = true ]; then
-		dotVideoExtensionOutput=".${videoExtensionOutput}"
-		newPathFilename=$( echo "${filename}" | sed  -E "s/.[a-z]{3}$/${dotVideoExtensionOutput}/" )
 	fi
 
 	# Ask before to perform any action ...
