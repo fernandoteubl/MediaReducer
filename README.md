@@ -1,13 +1,13 @@
-# Instalar MediaReducer:
+# Install MediaReducer:
 
 ```
 ln -s "<path_to_this_repository>/mreducer.sh" "/usr/local/bin/mreducer"
 ```
 
-Configurar Terminal para fechar sem perguntar:
+Config Terminal to close wihtout ask (on MAC OSX):
 
 * Terminal.app -> Preferences -> Profile -> Shell -> When the shell exit: Close if the shell exited cleanly
 
 Automator:
 
-* Copia Media Reducer.workflow para ~/Library/Services
+* Copy `Media Reducer.workflow` to `~/Library/Services`
