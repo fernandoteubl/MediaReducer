@@ -82,8 +82,8 @@ while getopts 'ri:q:v:b:a:f:c:l:uyop:' args ; do
 		y) answerYesToAll=true ;;
 		o) keepOriginalFiles=true ;;
 		p) case "${OPTARG}" in
-			1) imageMaxPixelSmallSide=640  ; imageQuality=60 ; videoMaxPixelSmallSide=480  ; videoKbps=500   ; audioKbps=64  ;  videoMaxFPS=24  ; videoCRF=23  ;;
-			2) imageMaxPixelSmallSide=1280 ; imageQuality=70 ; videoMaxPixelSmallSide=720  ; videoKbps=2000  ; audioKbps=96  ;  videoMaxFPS=24  ; videoCRF=20  ;;
+			1) imageMaxPixelSmallSide=640  ; imageQuality=60 ; videoMaxPixelSmallSide=480  ; videoKbps=800   ; audioKbps=64  ;  videoMaxFPS=24  ; videoCRF=23  ;;
+			2) imageMaxPixelSmallSide=1280 ; imageQuality=70 ; videoMaxPixelSmallSide=720  ; videoKbps=2400  ; audioKbps=96  ;  videoMaxFPS=24  ; videoCRF=20  ;;
 			3) imageMaxPixelSmallSide=1600 ; imageQuality=75 ; videoMaxPixelSmallSide=1080 ; videoKbps=4000  ; audioKbps=128 ;  videoMaxFPS=30  ; videoCRF=18  ;;
 			4) imageMaxPixelSmallSide=1920 ; imageQuality=80 ; videoMaxPixelSmallSide=1440 ; videoKbps=8000  ; audioKbps=196 ;  videoMaxFPS=60  ; videoCRF=16  ;;
 			5) imageMaxPixelSmallSide=2560 ; imageQuality=85 ; videoMaxPixelSmallSide=2160 ; videoKbps=16000 ; audioKbps=320 ;  videoMaxFPS=240 ; videoCRF=8   ;;
