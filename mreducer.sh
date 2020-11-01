@@ -3,6 +3,24 @@
 # Text format
 underline=`tput smul` ; nounderline=`tput rmul` ; bold=`tput bold` ; normal=`tput sgr0`
 
+# Variables
+imageTypes="jpg,jpeg,png,gif,heic"; imageTypes="$imageTypes,$(echo $imageTypes | tr '[a-z]' '[A-Z]')"
+videoTypes="avi,mov,mp4"; videoTypes="$videoTypes,$(echo $videoTypes | tr '[a-z]' '[A-Z]')"
+videoEncoder="h264_videotoolbox" # "libvpx-vp9" "hevc_videotoolbox"
+audioEncoder="aac"
+videoExtensionOutput="mp4"
+pathToFileOrDirectory=""
+dirNameWithOriginalFiles="_original_files"
+keepOriginalFiles=false
+answerYesToAll=false
+renameFiles=false
+forceToRecreateFiles=false
+maxPixelLargeSideFactor=3
+resizeImage=false
+resizeVideo=false
+
+imageMaxPixelSmallSide=1600 ; imageQuality=75 ; videoMaxPixelSmallSide=720 ; videoKbps=3000  ; audioKbps=128 ;  videoMaxFPS=30  ; videoCRF=18 # Default 3
+
 # Check commands...
 warningCommand=false
 errorCommand=false
@@ -12,6 +30,9 @@ if [ ! -x "$(command -v exiv2)" ]; then
 	errorCommand=true
 elif [ ! -x "$(command -v ffmpeg)" -o ! -x "$(command -v ffprobe)" ]; then
 	echo "ERROR: ffmpeg not found."
+	errorCommand=true
+elif [[ ! $(ffmpeg -v quiet -codecs | grep ${videoEncoder}) ]]; then
+	echo "Video encoder ${videoEncoder} not found."
 	errorCommand=true
 elif [ ! -x "$(command -v sips)" ]; then
 	echo "WARNING: sips not found."
@@ -25,21 +46,6 @@ elif [ $warningCommand = true ]; then
 	read ans; if [ "${ans}" != 'y' ]; then exit 1; fi
 fi
 
-# Variables
-imageTypes="jpg,jpeg,png,gif,heic"; imageTypes="$imageTypes,$(echo $imageTypes | tr '[a-z]' '[A-Z]')"
-videoTypes="avi,mov,mp4"; videoTypes="$videoTypes,$(echo $videoTypes | tr '[a-z]' '[A-Z]')"
-pathToFileOrDirectory=""
-dirNameWithOriginalFiles="_original_files"
-keepOriginalFiles=false
-answerYesToAll=false
-renameFiles=false
-forceToRecreateFiles=false
-maxPixelLargeSideFactor=3
-resizeImage=false
-resizeVideo=false
-
-imageMaxPixelSmallSide=1600 ; imageQuality=75 ; videoMaxPixelSmallSide=720 ; videoKbps=3000  ; audioKbps=128 ;  videoMaxFPS=30  ; videoCRF=18 # Default 3
-
 # Options
 usage(){
 	echo "${bold}Usage:${normal} $0 [options] [<file_or_directory>][...]"
@@ -48,6 +54,9 @@ usage(){
 	echo "  -i [px]             Reduce the image size to MIN(W,H) <= px (if 0, uses default = ${imageMaxPixelSmallSide})."
 	echo "  -q [qlty]           Set quality of image (0..100), used when it is resampled. (default = ${imageQuality})."
 	echo "  -v [px]             Reduce the video size to MIN(W,H) <= px (if 0, uses default = ${videoMaxPixelSmallSide})."
+	echo "  -e [video_encode]   Set encode. (default = ${videoEncoder})."
+	echo "  -d [audio_encode]   Set encode. (default = ${audioEncoder})."
+	echo "  -m [video_ext]      Set video extension. (default = ${videoExtensionOutput})."
 	echo "  -b [Kbps]           Set bitrate of video. (default = ${videoKbps})."
 	echo "  -a [Kbps]           Set bitrate of audio. (default = ${audioKbps})."
 	echo "  -f [FPS]            Set Max Frame Rate of video. It will never increase. (default = ${videoMaxFPS})."
@@ -69,7 +78,7 @@ checkIntegerValue() {
 		exit 1
 	fi
 }
-while getopts 'ri:q:v:b:a:f:c:l:uyop:' args ; do
+while getopts 'ri:q:v:e:d:m:b:a:f:c:l:uyop:' args ; do
 	case $args in
 		r) renameFiles=true ;;
 		i) resizeImage=true
@@ -84,6 +93,12 @@ while getopts 'ri:q:v:b:a:f:c:l:uyop:' args ; do
 				checkIntegerValue "${OPTARG}" "v" 64 6400
 				videoMaxPixelSmallSide="${OPTARG}"
 			fi ;;
+		e) videoEncoder="${OPTARG}"
+			if [[ ! $(ffmpeg -v quiet -codecs | grep "${videoEncoder}") ]]; then echo "Video encoder ${OPTARG} not supported. (all availables: ffmpeg -v quiet -codecs)"; exit 1; fi ;;
+		d) audioEncoder="${OPTARG}"
+			if [[ ! $(ffmpeg -v quiet -codecs | grep "${audioEncoder}") ]]; then echo "Audio encoder ${OPTARG} not supported."; exit 1; fi ;;
+		m) videoExtensionOutput="${OPTARG}"
+			if [[ ! "${videoTypes}" =~ ${videoExtensionOutput} ]]; then echo "Video extension ${OPTARG} not supported."; exit 1; fi ;;
 		b) videoKbps="${OPTARG}"
 			checkIntegerValue "${OPTARG}" "b" 100 40000 ;;
 		a) audioKbps="${OPTARG}"
@@ -103,7 +118,7 @@ while getopts 'ri:q:v:b:a:f:c:l:uyop:' args ; do
 			2) imageMaxPixelSmallSide=1280 ; imageQuality=70 ; videoMaxPixelSmallSide=720  ; videoKbps=2000  ; audioKbps=96  ;  videoMaxFPS=24 ; videoCRF=20  ;;
 			3)  ;; # Is already the deault..
 			4) imageMaxPixelSmallSide=1920 ; imageQuality=80 ; videoMaxPixelSmallSide=1080 ; videoKbps=4000  ; audioKbps=196 ;  videoMaxFPS=30 ; videoCRF=16  ;;
-			5) imageMaxPixelSmallSide=2560 ; imageQuality=85 ; videoMaxPixelSmallSide=1080 ; videoKbps=6000  ; audioKbps=256 ;  videoMaxFPS=60 ; videoCRF=12   ;;
+			5) imageMaxPixelSmallSide=2560 ; imageQuality=85 ; videoMaxPixelSmallSide=1080 ; videoKbps=6000  ; audioKbps=384 ;  videoMaxFPS=60 ; videoCRF=12   ;;
 			*) checkIntegerValue "${OPTARG}" "p" 1 5 ;;
 			esac ;;
 		*) usage ; exit 1 ;;
@@ -206,7 +221,6 @@ fi
 
 # Video functions
 videoTools="ffmpeg"
-videoExtensionOutput="mp4"
 getVideoTimestamp(){
 	QUICKTIME_CREATIONDATE=$( ffmpeg -i "$1" 2>&1 | grep com.apple.quicktime.creationdate | head -n 1 | sed -e 's/[^0-9]/ /g'  | awk '{  print $1 " " $2 " " $3 " " $4 " " $5 " " $6 }' OFS=' ' )
 	if [[ $QUICKTIME_CREATIONDATE != "" ]]; then
@@ -226,7 +240,7 @@ getVideoSizeWHF(){
 	fi
 }
 encodeVideoWHF(){
- 	ffmpeg -i "${1}" -s "${2}x${3}" -c:v h264_videotoolbox -b:v ${videoKbps}k -b:a ${audioKbps}k -c:a aac -crf ${videoCRF} -filter:v fps=${4} -movflags use_metadata_tags -map_metadata 0:g -loglevel error -stats "${5}"
+ 	ffmpeg -i "${1}" -s "${2}x${3}" -c:v ${videoEncoder} -b:v ${videoKbps}k -b:a ${audioKbps}k -c:a ${audioEncoder} -crf ${videoCRF} -filter:v fps=${4} -allow_sw 1 -movflags use_metadata_tags -map_metadata 0:g -loglevel error -stats "${5}"
 	return $?
 }
 
@@ -341,8 +355,7 @@ for filename in "${listFiles[@]}"; do
 	# Check if need to rename
 	do_rename=false
 	if [ $do_resize = true -a $isVideo = true ]; then
-		dotVideoExtensionOutput=".${videoExtensionOutput}"
-		newPathFilename=$( echo "${filename}" | sed  -E "s/.[a-z]{3}$/${dotVideoExtensionOutput}/" )
+		newPathFilename=$( echo "${filename}" | sed  -E "s/.[a-zA-Z0-9]{3}$/.${videoExtensionOutput}/" )
 		if [ "$filename" != "$newPathFilename" ]; then
 			do_rename=true
 		fi
