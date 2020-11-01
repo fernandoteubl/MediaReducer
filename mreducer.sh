@@ -3,6 +3,28 @@
 # Text format
 underline=`tput smul` ; nounderline=`tput rmul` ; bold=`tput bold` ; normal=`tput sgr0`
 
+# Check commands...
+warningCommand=false
+errorCommand=false
+# First all error, after all warning...
+if [ ! -x "$(command -v exiv2)" ]; then
+	echo "ERROR: exiv2 not found. Try install exiv2..."
+	errorCommand=true
+elif [ ! -x "$(command -v ffmpeg)" -o ! -x "$(command -v ffprobe)" ]; then
+	echo "ERROR: ffmpeg not found."
+	errorCommand=true
+elif [ ! -x "$(command -v sips)" ]; then
+	echo "WARNING: sips not found."
+	warningCommand=true
+fi
+if [ $errorCommand = true ]; then
+	echo -n "Press any key to abort..."
+	read ans; exit 1
+elif [ $warningCommand = true ]; then
+	echo -n "Press 'y' to continue or any other key to cancel: "
+	read ans; if [ "${ans}" != 'y' ]; then exit 1; fi
+fi
+
 # Variables
 imageTypes="jpg,jpeg,png,gif,JPG"
 videoTypes="avi,mov,mp4,MP4"
@@ -139,14 +161,16 @@ fi
 if [ -x "$(command -v sips)" ]; then
 	imageTools="sips"
 	getImageTimestamp(){
-		# WARNING: Using exiv2 because sips shows other date (posible when is inserted the geo tag).
-# 		SIPS_RET=$(sips --getProperty creation "${1}" 2>/dev/null)
-# 		if [ $? = 0 ]; then
-# 			echo ${SIPS_RET} | sed -e 's/.* creation: //' | sed -e 's/:/ /g' | sed -e 's/<nil>//'
-# 		fi
+		# WARNING: sips shows other date (posible when is inserted the geo tag).
+		# So, trying exiv before...
 		RET=$(exiv2 "${1}" 2>/dev/null | grep timestamp )
 		if [ $? = 0 ]; then
 			echo ${RET//:/ } | sed "s/[^0-9 ]*//g" | sed -e 's/^ *//' -e 's/ *$//'
+		else
+			SIPS_RET=$(sips --getProperty creation "${1}" 2>/dev/null)
+			if [ $? = 0 ]; then
+				echo ${SIPS_RET} | sed -e 's/.* creation: //' | sed -e 's/:/ /g' | sed -e 's/<nil>//'
+			fi
 		fi
 	}
 	getImageSizeWH() {
