@@ -18,8 +18,19 @@ forceToRecreateFiles=false
 maxPixelLargeSideFactor=3
 resizeImage=false
 resizeVideo=false
+imageMaxPixelSmallSide=0  ; imageQuality=0 ; videoMaxPixelSmallSide=0  ; videoKbps=0   ; audioKbps=0  ;  videoMaxFPS=0 ; videoCRF=0
+setDefValues() {
+	case "$1" in
+	1) imageMaxPixelSmallSide=640  ; imageQuality=60 ; videoMaxPixelSmallSide=480  ; videoKbps=760   ; audioKbps=64  ;  videoMaxFPS=24 ; videoCRF=24  ;;
+	2) imageMaxPixelSmallSide=1280 ; imageQuality=70 ; videoMaxPixelSmallSide=720  ; videoKbps=2000  ; audioKbps=96  ;  videoMaxFPS=24 ; videoCRF=20  ;;
+	3) imageMaxPixelSmallSide=1600 ; imageQuality=75 ; videoMaxPixelSmallSide=720  ; videoKbps=3000  ; audioKbps=128 ;  videoMaxFPS=30 ; videoCRF=18  ;;
+	4) imageMaxPixelSmallSide=1920 ; imageQuality=80 ; videoMaxPixelSmallSide=1080 ; videoKbps=4000  ; audioKbps=196 ;  videoMaxFPS=30 ; videoCRF=16  ;;
+	5) imageMaxPixelSmallSide=2560 ; imageQuality=85 ; videoMaxPixelSmallSide=1080 ; videoKbps=6000  ; audioKbps=384 ;  videoMaxFPS=60 ; videoCRF=12  ;;
+	*) checkIntegerValue "${OPTARG}" "p" 1 5 ;;
+	esac
+}
+setDefValues 3
 
-imageMaxPixelSmallSide=1600 ; imageQuality=75 ; videoMaxPixelSmallSide=720 ; videoKbps=3000  ; audioKbps=128 ;  videoMaxFPS=30  ; videoCRF=18 # Default 3
 
 # Check commands...
 warningCommand=false
@@ -54,9 +65,9 @@ usage(){
 	echo "  -i [px]             Reduce the image size to MIN(W,H) <= px (if 0, uses default = ${imageMaxPixelSmallSide})."
 	echo "  -q [qlty]           Set quality of image (0..100), used when it is resampled. (default = ${imageQuality})."
 	echo "  -v [px]             Reduce the video size to MIN(W,H) <= px (if 0, uses default = ${videoMaxPixelSmallSide})."
-	echo "  -e [video_encode]   Set encode. (default = ${videoEncoder})."
-	echo "  -d [audio_encode]   Set encode. (default = ${audioEncoder})."
-	echo "  -m [video_ext]      Set video extension. (default = ${videoExtensionOutput})."
+	echo "  -e [video_encode]   Set a video encoder. (default = ${videoEncoder})."
+	echo "  -d [audio_encode]   Set a audio encoder. (default = ${audioEncoder})."
+	echo "  -m [video_ext]      Set a video extension. (default = ${videoExtensionOutput})."
 	echo "  -b [Kbps]           Set bitrate of video. (default = ${videoKbps})."
 	echo "  -a [Kbps]           Set bitrate of audio. (default = ${audioKbps})."
 	echo "  -f [FPS]            Set Max Frame Rate of video. It will never increase. (default = ${videoMaxFPS})."
@@ -113,14 +124,7 @@ while getopts 'ri:q:v:e:d:m:b:a:f:c:l:uyop:' args ; do
 		y) answerYesToAll=true ;;
 		o) keepOriginalFiles=true ;;
 		p) resizeImage=true; resizeVideo=true
-			case "${OPTARG}" in
-			1) imageMaxPixelSmallSide=640  ; imageQuality=60 ; videoMaxPixelSmallSide=480  ; videoKbps=760   ; audioKbps=64  ;  videoMaxFPS=24 ; videoCRF=24  ;;
-			2) imageMaxPixelSmallSide=1280 ; imageQuality=70 ; videoMaxPixelSmallSide=720  ; videoKbps=2000  ; audioKbps=96  ;  videoMaxFPS=24 ; videoCRF=20  ;;
-			3)  ;; # Is already the deault..
-			4) imageMaxPixelSmallSide=1920 ; imageQuality=80 ; videoMaxPixelSmallSide=1080 ; videoKbps=4000  ; audioKbps=196 ;  videoMaxFPS=30 ; videoCRF=16  ;;
-			5) imageMaxPixelSmallSide=2560 ; imageQuality=85 ; videoMaxPixelSmallSide=1080 ; videoKbps=6000  ; audioKbps=384 ;  videoMaxFPS=60 ; videoCRF=12   ;;
-			*) checkIntegerValue "${OPTARG}" "p" 1 5 ;;
-			esac ;;
+			setDefValues ${OPTARG} ;;
 		*) usage ; exit 1 ;;
 	esac
 done
