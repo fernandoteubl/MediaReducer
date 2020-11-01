@@ -26,8 +26,8 @@ elif [ $warningCommand = true ]; then
 fi
 
 # Variables
-imageTypes="jpg,jpeg,png,gif,JPG"
-videoTypes="avi,mov,mp4,MP4"
+imageTypes="jpg,jpeg,png,gif,heic"; imageTypes="$imageTypes,$(echo $imageTypes | tr '[a-z]' '[A-Z]')"
+videoTypes="avi,mov,mp4"; videoTypes="$videoTypes,$(echo $videoTypes | tr '[a-z]' '[A-Z]')"
 pathToFileOrDirectory=""
 dirNameWithOriginalFiles="_original_files"
 keepOriginalFiles=false
