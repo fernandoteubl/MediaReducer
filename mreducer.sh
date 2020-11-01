@@ -74,15 +74,15 @@ while getopts 'ri:q:v:b:a:f:c:l:uyop:' args ; do
 		r) renameFiles=true ;;
 		i) resizeImage=true
 			if [ "${OPTARG}" -gt 0 ]; then
+				checkIntegerValue "${OPTARG}" "i" 160 6400
 				imageMaxPixelSmallSide="${OPTARG}"
-				checkIntegerValue "${OPTARG}" "i" 160 6400 ;;
 			fi ;;
 		q) imageQuality="${OPTARG}"
 			checkIntegerValue "${OPTARG}" "q" 0 100 ;;
 		v) resizeVideo=true
 			if [ "${OPTARG}" -gt 0 ]; then
+				checkIntegerValue "${OPTARG}" "v" 64 6400
 				videoMaxPixelSmallSide="${OPTARG}"
-				checkIntegerValue "${OPTARG}" "v" 64 6400 ;;
 			fi ;;
 		b) videoKbps="${OPTARG}"
 			checkIntegerValue "${OPTARG}" "b" 100 40000 ;;
