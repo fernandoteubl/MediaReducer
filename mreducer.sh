@@ -34,25 +34,20 @@ keepOriginalFiles=false
 answerYesToAll=false
 renameFiles=false
 forceToRecreateFiles=false
-imageMaxPixelSmallSide=0
-imageMaxPixelSmallSideDefault=1280
-videoMaxPixelSmallSide=0
-videoMaxPixelSmallSideDefault=720
 maxPixelLargeSideFactor=3
-imageQuality=65
-videoKbps=2000
-audioKbps=96
-videoMaxFPS=24
-videoCRF=23
+resizeImage=false
+resizeVideo=false
+
+imageMaxPixelSmallSide=1600 ; imageQuality=75 ; videoMaxPixelSmallSide=720 ; videoKbps=3600  ; audioKbps=128 ;  videoMaxFPS=30  ; videoCRF=18 # Default 3
 
 # Options
 usage(){
 	echo "${bold}Usage:${normal} $0 [options] [<file_or_directory>][...]"
 	echo "  <file_or_directory> Specific media file or a directory (and your subdirectories) with medias. If blank, list all medias in current directory."
 	echo "  -r                  Rename all files with the creation date."
-	echo "  -i [px]             Reduce the image size to MIN(W,H) <= px (if 0, uses default = ${imageMaxPixelSmallSideDefault})."
+	echo "  -i [px]             Reduce the image size to MIN(W,H) <= px (if 0, uses default = ${imageMaxPixelSmallSide})."
 	echo "  -q [qlty]           Set quality of image (0..100), used when it is resampled. (default = ${imageQuality})."
-	echo "  -v [px]             Reduce the video size to MIN(W,H) <= px (if 0, uses default = ${videoMaxPixelSmallSideDefault})."
+	echo "  -v [px]             Reduce the video size to MIN(W,H) <= px (if 0, uses default = ${videoMaxPixelSmallSide})."
 	echo "  -b [Kbps]           Set bitrate of video. (default = ${videoKbps})."
 	echo "  -a [Kbps]           Set bitrate of audio. (default = ${audioKbps})."
 	echo "  -f [FPS]            Set Max Frame Rate of video. It will never increase. (default = ${videoMaxFPS})."
@@ -65,13 +60,8 @@ usage(){
 }
 checkIntegerValue() {
 	if echo "$1" | egrep -q '^[0-9]+$'; then
-		if ! [ -z "$5" ] && [ $1 -eq $5 ]; then return; fi # Check exception, like 0 to default.
 		if [ $1 -lt $3 -o $1 -gt $4 ]; then
-			if [ -z "$5" ]; then
-				echo "Please, the value of parameter \"-$2\" must be between $3 and $4."
-			else
-				echo "Please, the value of parameter \"-$2\" must be between $3 and $4, or $5 ($6)."
-			fi
+			echo "Please, the value of parameter \"-$2\" must be between $3 and $4."
 			exit 1
 		fi
 	else
@@ -82,14 +72,18 @@ checkIntegerValue() {
 while getopts 'ri:q:v:b:a:f:c:l:uyop:' args ; do
 	case $args in
 		r) renameFiles=true ;;
-		i) imageMaxPixelSmallSide="${OPTARG}"
-			checkIntegerValue "${OPTARG}" "i" 160 6400 0 "default"
-			if [ $imageMaxPixelSmallSide -eq 0 ]; then imageMaxPixelSmallSide=$imageMaxPixelSmallSideDefault; fi ;;
+		i) resizeImage=true
+			if [ "${OPTARG}" -gt 0 ]; then
+				imageMaxPixelSmallSide="${OPTARG}"
+				checkIntegerValue "${OPTARG}" "i" 160 6400 ;;
+			fi ;;
 		q) imageQuality="${OPTARG}"
 			checkIntegerValue "${OPTARG}" "q" 0 100 ;;
-		v) videoMaxPixelSmallSide="${OPTARG}"
-			checkIntegerValue "${OPTARG}" "v" 64 6400 0 "default"
-			if [ $videoMaxPixelSmallSide -eq 0 ]; then videoMaxPixelSmallSide=$videoMaxPixelSmallSideDefault; fi ;;
+		v) resizeVideo=true
+			if [ "${OPTARG}" -gt 0 ]; then
+				videoMaxPixelSmallSide="${OPTARG}"
+				checkIntegerValue "${OPTARG}" "v" 64 6400 ;;
+			fi ;;
 		b) videoKbps="${OPTARG}"
 			checkIntegerValue "${OPTARG}" "b" 100 40000 ;;
 		a) audioKbps="${OPTARG}"
@@ -104,11 +98,11 @@ while getopts 'ri:q:v:b:a:f:c:l:uyop:' args ; do
 		y) answerYesToAll=true ;;
 		o) keepOriginalFiles=true ;;
 		p) case "${OPTARG}" in
-			1) imageMaxPixelSmallSide=640  ; imageQuality=60 ; videoMaxPixelSmallSide=480  ; videoKbps=800   ; audioKbps=64  ;  videoMaxFPS=24  ; videoCRF=23  ;;
-			2) imageMaxPixelSmallSide=1280 ; imageQuality=70 ; videoMaxPixelSmallSide=720  ; videoKbps=2400  ; audioKbps=96  ;  videoMaxFPS=24  ; videoCRF=20  ;;
-			3) imageMaxPixelSmallSide=1600 ; imageQuality=75 ; videoMaxPixelSmallSide=1080 ; videoKbps=4000  ; audioKbps=128 ;  videoMaxFPS=30  ; videoCRF=18  ;;
-			4) imageMaxPixelSmallSide=1920 ; imageQuality=80 ; videoMaxPixelSmallSide=1440 ; videoKbps=8000  ; audioKbps=196 ;  videoMaxFPS=60  ; videoCRF=16  ;;
-			5) imageMaxPixelSmallSide=2560 ; imageQuality=85 ; videoMaxPixelSmallSide=2160 ; videoKbps=16000 ; audioKbps=320 ;  videoMaxFPS=240 ; videoCRF=8   ;;
+			1) imageMaxPixelSmallSide=640  ; imageQuality=60 ; videoMaxPixelSmallSide=480  ; videoKbps=800   ; audioKbps=64  ;  videoMaxFPS=24 ; videoCRF=23  ;;
+			2) imageMaxPixelSmallSide=1280 ; imageQuality=70 ; videoMaxPixelSmallSide=720  ; videoKbps=2400  ; audioKbps=96  ;  videoMaxFPS=24 ; videoCRF=20  ;;
+			3)  ;; # Is already the deault..
+			4) imageMaxPixelSmallSide=1920 ; imageQuality=80 ; videoMaxPixelSmallSide=1080 ; videoKbps=4000  ; audioKbps=196 ;  videoMaxFPS=30 ; videoCRF=16  ;;
+			5) imageMaxPixelSmallSide=2560 ; imageQuality=85 ; videoMaxPixelSmallSide=1080 ; videoKbps=6000  ; audioKbps=256 ;  videoMaxFPS=60 ; videoCRF=8   ;;
 			*) checkIntegerValue "${OPTARG}" "p" 1 5 ;;
 			esac ;;
 		*) usage ; exit 1 ;;
@@ -285,22 +279,22 @@ getNewSizeWH(){
 
 
 # Print actions and parameters ...
-if [ $renameFiles = false -a $imageMaxPixelSmallSide -eq 0 -a $videoMaxPixelSmallSide -eq 0 ]; then
+if [ $renameFiles = false -a $resizeImage = false -a $resizeVideo = false ]; then
 	echo "Please, uses -r to rename and/or -i to resize image and/or -v to resize video, or -h to help."
 	exit 1
 fi
 echo -n "Applying"
 if [ $renameFiles = true ]; then
 	echo -n " ${bold}renaming${normal}";
-	if [ $imageMaxPixelSmallSide -gt 0 -a $videoMaxPixelSmallSide -gt 0 ]; then echo -n ",";
-	elif [ $imageMaxPixelSmallSide -gt 0 -o $videoMaxPixelSmallSide -gt 0 ]; then echo -n " and"; fi
+	if [ $resizeImage = true -a $resizeVideo = true ]; then echo -n ",";
+	elif [ $resizeImage = true -o $resizeVideo = true ]; then echo -n " and"; fi
 fi
-if [ $imageMaxPixelSmallSide -gt 0 ]; then
+if [ $resizeImage = true ]; then
 	(( image_max_side = imageMaxPixelSmallSide * maxPixelLargeSideFactor ))
 	echo -n " ${bold}image resampling${normal} [${imageMaxPixelSmallSide}~${image_max_side} and qlty=${imageQuality} using ${imageTools}]"
-	if [ $videoMaxPixelSmallSide -gt 0 ]; then echo -n " and "; fi
+	if [ $resizeVideo = true ]; then echo -n " and "; fi
 fi
-if [ $videoMaxPixelSmallSide -gt 0 ]; then
+if [ $resizeVideo = true ]; then
 	(( video_max_side = videoMaxPixelSmallSide * maxPixelLargeSideFactor ))
 	echo -n " ${bold}video coding${normal} [${videoMaxPixelSmallSide}~${video_max_side}, Mbps=v:${videoKbps}/a:${audioKbps}, FPS=${videoMaxFPS} and CRF=${videoCRF} using ${videoTools}]"
 fi
@@ -325,7 +319,7 @@ for filename in "${listFiles[@]}"; do
 	do_resize=false
 	if [ $isVideo = true ]; then
 		read width height curFPS <<< $( getVideoSizeWHF "${filename}" )
-		if [ $videoMaxPixelSmallSide -gt 0 ]; then
+		if [ $resizeVideo = true ]; then
 			if [ "$width" != "" -a "$height" != "" -a "$curFPS" != "" ]; then # Ignore if there is no WIDTH, HEIGHT and FPS values
 				read newWidth newHeight do_resize <<<$( getNewSizeWH $width $height $videoMaxPixelSmallSide $(( videoMaxPixelSmallSide * maxPixelLargeSideFactor )) )
 				# Bash does not understand floating point arithmetic. It treats numbers containing a decimal point as strings. Using bc instead.
@@ -335,7 +329,7 @@ for filename in "${listFiles[@]}"; do
 		fi
 	else
 		read width height <<< $( getImageSizeWH "${filename}" )
-		if [ $imageMaxPixelSmallSide -gt 0 ]; then
+		if [ $resizeImage = true ]; then
 			if [ "$width" != "" -a "$height" != "" ]; then # Ignore if there is no WIDTH and HEIGHT values
 				read newWidth newHeight do_resize <<<$( getNewSizeWH $width $height $imageMaxPixelSmallSide $(( imageMaxPixelSmallSide * maxPixelLargeSideFactor )) )
 				if [ $forceToRecreateFiles = true ]; then do_resize=true; fi
