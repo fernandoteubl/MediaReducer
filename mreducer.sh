@@ -6,9 +6,6 @@ underline=`tput smul` ; nounderline=`tput rmul` ; bold=`tput bold` ; normal=`tpu
 # Variables
 imageTypes="jpg,jpeg,png,gif,heic"; imageTypes="$imageTypes,$(echo $imageTypes | tr '[a-z]' '[A-Z]')"
 videoTypes="avi,mov,mp4"; videoTypes="$videoTypes,$(echo $videoTypes | tr '[a-z]' '[A-Z]')"
-videoEncoder="h264_videotoolbox" # "libvpx-vp9" "hevc_videotoolbox"
-audioEncoder="aac"
-videoExtensionOutput="mp4"
 pathToFileOrDirectory=""
 dirNameWithOriginalFiles="_original_files"
 keepOriginalFiles=false
@@ -18,18 +15,25 @@ forceToRecreateFiles=false
 maxPixelLargeSideFactor=3
 resizeImage=false
 resizeVideo=false
-imageMaxPixelSmallSide=0  ; imageQuality=0 ; videoMaxPixelSmallSide=0  ; videoKbps=0   ; audioKbps=0  ;  videoMaxFPS=0 ; videoCRF=0
+
 setDefValues() {
-	case "$1" in
-	1) imageMaxPixelSmallSide=640  ; imageQuality=60 ; videoMaxPixelSmallSide=480  ; videoKbps=760   ; audioKbps=64  ;  videoMaxFPS=24 ; videoCRF=24  ;;
-	2) imageMaxPixelSmallSide=1280 ; imageQuality=70 ; videoMaxPixelSmallSide=720  ; videoKbps=2000  ; audioKbps=96  ;  videoMaxFPS=24 ; videoCRF=20  ;;
-	3) imageMaxPixelSmallSide=1600 ; imageQuality=75 ; videoMaxPixelSmallSide=720  ; videoKbps=3000  ; audioKbps=128 ;  videoMaxFPS=30 ; videoCRF=18  ;;
-	4) imageMaxPixelSmallSide=1920 ; imageQuality=80 ; videoMaxPixelSmallSide=1080 ; videoKbps=4000  ; audioKbps=196 ;  videoMaxFPS=30 ; videoCRF=16  ;;
-	5) imageMaxPixelSmallSide=2560 ; imageQuality=85 ; videoMaxPixelSmallSide=1080 ; videoKbps=6000  ; audioKbps=384 ;  videoMaxFPS=60 ; videoCRF=12  ;;
-	*) checkIntegerValue "${OPTARG}" "p" 1 5 ;;
+	setDefValuesOpts="CQ, where C(odec) = m: h264, v: VP9, h: HVEC and Q(uality) = 1 (worse) to 5 (best) (eg.: m3, h4, v2)."
+	case "${1:0:1}" in
+	m) videoEncoder="h264_videotoolbox" ; audioEncoder="aac" ; videoExtensionOutput="mp4" ;;
+	v) videoEncoder="libvpx-vp9"        ; audioEncoder="aac" ; videoExtensionOutput="mp4" ;;
+	h) videoEncoder="hevc_videotoolbox" ; audioEncoder="aac" ; videoExtensionOutput="mp4" ;;
+	*) echo "Invalid option. -p: ${setDefValuesOpts}" ; exit 1 ;;
+	esac
+	case "${1:1:1}" in
+	1) imageMaxPixelSmallSide=640  ; imageQuality=60 ; videoMaxPixelSmallSide=480  ; videoKbps=760   ; audioKbps=64  ;  videoMaxFPS=24 ; videoCRF=24 ;;
+	2) imageMaxPixelSmallSide=1280 ; imageQuality=70 ; videoMaxPixelSmallSide=720  ; videoKbps=2000  ; audioKbps=96  ;  videoMaxFPS=24 ; videoCRF=20 ;;
+	3) imageMaxPixelSmallSide=1600 ; imageQuality=75 ; videoMaxPixelSmallSide=720  ; videoKbps=3000  ; audioKbps=128 ;  videoMaxFPS=30 ; videoCRF=18 ;;
+	4) imageMaxPixelSmallSide=1920 ; imageQuality=80 ; videoMaxPixelSmallSide=1080 ; videoKbps=4000  ; audioKbps=196 ;  videoMaxFPS=30 ; videoCRF=16 ;;
+	5) imageMaxPixelSmallSide=2560 ; imageQuality=85 ; videoMaxPixelSmallSide=1080 ; videoKbps=6000  ; audioKbps=384 ;  videoMaxFPS=60 ; videoCRF=12 ;;
+	*) echo "Invalid option: -p : ${setDefValuesOpts}" ; exit 1 ;;
 	esac
 }
-setDefValues 3
+setDefValues m3
 
 
 # Check commands...
@@ -76,7 +80,7 @@ usage(){
 	echo "  -u                  Force to resample/encode all files. Also, if there is no date in the metadata, the file creation date will be used to rename it."
 	echo "  -y                  Answer yes to all."
 	echo "  -o                  Keep original files in a subfolder called \"${dirNameWithOriginalFiles}. (Just modified files)\""
-	echo "  -p [def]            Predefined quality: from 1 (worse) to 5 (best)."
+	echo "  -p [def]            Predefined. ${setDefValuesOpts}"
 }
 checkIntegerValue() {
 	if echo "$1" | egrep -q '^[0-9]+$'; then
@@ -315,7 +319,7 @@ if [ $resizeImage = true ]; then
 fi
 if [ $resizeVideo = true ]; then
 	(( video_max_side = videoMaxPixelSmallSide * maxPixelLargeSideFactor ))
-	echo -n " ${bold}video coding${normal} [${videoMaxPixelSmallSide}~${video_max_side}, Mbps=v:${videoKbps}/a:${audioKbps}, FPS=${videoMaxFPS} and CRF=${videoCRF} using ${videoTools}]"
+	echo -n " ${bold}video coding${normal} [${videoMaxPixelSmallSide}~${video_max_side}, Mbps=v:${videoKbps}/a:${audioKbps}, FPS=${videoMaxFPS} and CRF=${videoCRF} using ${videoTools} v:${videoEncoder} a:${audioEncoder}]"
 fi
 echo "..."
 
