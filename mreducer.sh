@@ -210,7 +210,7 @@ if [ -x "$(command -v sips)" ]; then
 		fi
 		return $?
 	}
-elif [ -x "$(command -v exiv2)" -a -x "$(command -v convert)" -a -x "$(command -v heif-convert)" ]; then
+elif [ $forceJPEG = false -a -x "$(command -v exiv2)" -a -x "$(command -v convert)" ]; then
 	imageTools="convert and exiv2"
 	getImageTimestamp(){
 		RET=$(exiv2 "${1}" 2>/dev/null | grep timestamp )
@@ -225,11 +225,7 @@ elif [ -x "$(command -v exiv2)" -a -x "$(command -v convert)" -a -x "$(command -
 		fi
 	}
 	resampleImageWH() {
-		if [ $forceJPEG = true ]; then
-			heif-convert "${1}" -resize "${2}x${3}" -quality ${imageQuality} "${4}"
-		else
-			convert "${1}" -resize "${2}x${3}" -quality ${imageQuality} "${4}"
-		fi
+		convert "${1}" -resize "${2}x${3}" -quality ${imageQuality} "${4}"
 		return $?
 	}
 else
