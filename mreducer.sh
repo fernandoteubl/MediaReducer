@@ -15,6 +15,8 @@ forceToRecreateFiles=false
 maxPixelLargeSideFactor=3
 resizeImage=false
 resizeVideo=false
+forceJPEG=false
+jpegExtension="jpg"
 
 setDefValues() {
 	setDefValuesOpts="CQ, where C(odec) = m: h264, v: VP9, h: HVEC and Q(uality) = 1 (worse) to 5 (best) (eg.: m3, h4, v2)."
@@ -68,6 +70,7 @@ usage(){
 	echo "  -r                  Rename all files with the creation date."
 	echo "  -i [px]             Reduce the image size to MIN(W,H) <= px (if 0, uses default = ${imageMaxPixelSmallSide})."
 	echo "  -q [qlty]           Set quality of image (0..100), used when it is resampled. (default = ${imageQuality})."
+	echo "  -j                  Forcing ouput as JPEG format. (default = ${forceJPEG})"
 	echo "  -v [px]             Reduce the video size to MIN(W,H) <= px (if 0, uses default = ${videoMaxPixelSmallSide})."
 	echo "  -e [video_encode]   Set a video encoder. (default = ${videoEncoder})."
 	echo "  -d [audio_encode]   Set a audio encoder. (default = ${audioEncoder})."
@@ -93,7 +96,7 @@ checkIntegerValue() {
 		exit 1
 	fi
 }
-while getopts 'ri:q:v:e:d:m:b:a:f:c:l:uyop:' args ; do
+while getopts 'ri:q:jv:e:d:m:b:a:f:c:l:uyop:' args ; do
 	case $args in
 		r) renameFiles=true ;;
 		i) resizeImage=true
@@ -103,6 +106,7 @@ while getopts 'ri:q:v:e:d:m:b:a:f:c:l:uyop:' args ; do
 			fi ;;
 		q) imageQuality="${OPTARG}"
 			checkIntegerValue "${OPTARG}" "q" 0 100 ;;
+		j) forceJPEG=true ;;
 		v) resizeVideo=true
 			if [ "${OPTARG}" -gt 0 ]; then
 				checkIntegerValue "${OPTARG}" "v" 64 6400
@@ -199,10 +203,14 @@ if [ -x "$(command -v sips)" ]; then
 		if [ "${W}" != "" -a "${H}" != "" ]; then  echo $W $H;  else echo ""; fi
 	}
 	resampleImageWH() {
-		sips --setProperty formatOptions ${imageQuality} --resampleHeightWidth ${3} ${2} "${1}" -o "$4" >/dev/null
+		if [ $forceJPEG = true ]; then
+			sips --setProperty formatOptions ${imageQuality} --setProperty format jpeg --resampleHeightWidth ${3} ${2} "${1}" -o "$4" >/dev/null
+		else
+			sips --setProperty formatOptions ${imageQuality} --resampleHeightWidth ${3} ${2} "${1}" -o "$4" >/dev/null
+		fi
 		return $?
 	}
-elif [ -x "$(command -v exiv2)" -a -x "$(command -v convert)" ]; then
+elif [ -x "$(command -v exiv2)" -a -x "$(command -v convert)" -a -x "$(command -v heif-convert)" ]; then
 	imageTools="convert and exiv2"
 	getImageTimestamp(){
 		RET=$(exiv2 "${1}" 2>/dev/null | grep timestamp )
@@ -217,7 +225,11 @@ elif [ -x "$(command -v exiv2)" -a -x "$(command -v convert)" ]; then
 		fi
 	}
 	resampleImageWH() {
-		convert "${1}" -resize "${2}x${3}" -quality ${imageQuality} "${4}"
+		if [ $forceJPEG = true ]; then
+			heif-convert "${1}" -resize "${2}x${3}" -quality ${imageQuality} "${4}"
+		else
+			convert "${1}" -resize "${2}x${3}" -quality ${imageQuality} "${4}"
+		fi
 		return $?
 	}
 else
@@ -362,10 +374,19 @@ for filename in "${listFiles[@]}"; do
 
 	# Check if need to rename
 	do_rename=false
-	if [ $do_resize = true -a $isVideo = true ]; then
-		newPathFilename=$( echo "${filename}" | sed  -E "s/.[a-zA-Z0-9]{3}$/.${videoExtensionOutput}/" )
-		if [ "$filename" != "$newPathFilename" ]; then
-			do_rename=true
+	if [ $do_resize = true ]; then
+		if [ $isVideo = true ]; then
+			newPathFilename=$( echo "${filename%.*}.${videoExtensionOutput}" )
+			if [ "$filename" != "$newPathFilename" ]; then
+				do_rename=true
+			fi
+		elif [ $forceJPEG = true ]; then
+			newPathFilename=$( echo "${filename%.*}.${jpegExtension}" )
+			if [ "$filename" != "$newPathFilename" ]; then
+				do_rename=true
+			fi
+		else
+			newPathFilename="${filename}"
 		fi
 	else
 		newPathFilename="${filename}"
