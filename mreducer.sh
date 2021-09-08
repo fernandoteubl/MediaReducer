@@ -28,10 +28,10 @@ setDefValues() {
 	esac
 	case "${1:1:1}" in
 	1) imageMaxPixelSmallSide=640  ; imageQuality=60 ; videoMaxPixelSmallSide=480  ; videoKbps=760   ; audioKbps=64  ;  videoMaxFPS=24 ; videoCRF=24 ;;
-	2) imageMaxPixelSmallSide=1280 ; imageQuality=70 ; videoMaxPixelSmallSide=720  ; videoKbps=2000  ; audioKbps=96  ;  videoMaxFPS=24 ; videoCRF=20 ;;
-	3) imageMaxPixelSmallSide=1600 ; imageQuality=75 ; videoMaxPixelSmallSide=720  ; videoKbps=3000  ; audioKbps=128 ;  videoMaxFPS=30 ; videoCRF=18 ;;
-	4) imageMaxPixelSmallSide=1920 ; imageQuality=80 ; videoMaxPixelSmallSide=1080 ; videoKbps=4000  ; audioKbps=196 ;  videoMaxFPS=30 ; videoCRF=16 ;;
-	5) imageMaxPixelSmallSide=2560 ; imageQuality=85 ; videoMaxPixelSmallSide=1080 ; videoKbps=6000  ; audioKbps=384 ;  videoMaxFPS=60 ; videoCRF=12 ;;
+	2) imageMaxPixelSmallSide=1280 ; imageQuality=70 ; videoMaxPixelSmallSide=720  ; videoKbps=2400  ; audioKbps=96  ;  videoMaxFPS=24 ; videoCRF=16 ;;
+	3) imageMaxPixelSmallSide=1600 ; imageQuality=75 ; videoMaxPixelSmallSide=720  ; videoKbps=3200  ; audioKbps=128 ;  videoMaxFPS=30 ; videoCRF=14 ;;
+	4) imageMaxPixelSmallSide=1920 ; imageQuality=80 ; videoMaxPixelSmallSide=1080 ; videoKbps=4000  ; audioKbps=196 ;  videoMaxFPS=30 ; videoCRF=12 ;;
+	5) imageMaxPixelSmallSide=2560 ; imageQuality=85 ; videoMaxPixelSmallSide=1080 ; videoKbps=6000  ; audioKbps=384 ;  videoMaxFPS=60 ; videoCRF=10 ;;
 	*) echo "Invalid option: -p : ${setDefValuesOpts}" ; exit 1 ;;
 	esac
 }
