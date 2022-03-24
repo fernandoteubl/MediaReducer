@@ -248,12 +248,14 @@ getVideoTimestamp(){
 getVideoSizeWHF(){
 	read w h <<< $( ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of default=nw=1:nk=1 "${1}" )
 	f=$( ffmpeg -i "${1}" 2>&1 | sed -n "s/.*, \(.*\) tbr.*/\1/p" )
-	rot=$( ffmpeg -i "$1"  2>&1 | grep rotate | head -n 1 | sed -e 's/[^0-9]/ /g' | awk '{ print $1 }' )
+    # Can be rotate or rotation ... look for 'rotat' (both cases) ...
+	rot=$( ffmpeg -i "$1"  2>&1 | grep rotat | head -n 1 | sed -r 's/.*([1-9][0-9]*).*$/\1/g' | awk '{ print $1 }' )
 	if [ -z "$rot" ] || [ $rot -eq 180 ]; then
 		echo $w $h $f
 	else
 		echo $h $w $f
 	fi
+exit 0
 }
 encodeVideoWHF(){
  	ffmpeg -i "${1}" -s "${2}x${3}" -c:v ${videoEncoder} -b:v ${videoKbps}k -b:a ${audioKbps}k -c:a ${audioEncoder} -crf ${videoCRF} -filter:v fps=${4} -allow_sw 1 -movflags use_metadata_tags -map_metadata 0:g -loglevel error -stats "${5}"
