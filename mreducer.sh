@@ -249,7 +249,7 @@ getVideoSizeWHF(){
 	read w h <<< $( ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of default=nw=1:nk=1 "${1}" )
 	f=$( ffmpeg -i "${1}" 2>&1 | sed -n "s/.*, \(.*\) tbr.*/\1/p" )
     # Can be rotate or rotation ... look for 'rotat' (both cases) ...
-	rot=$( ffmpeg -i "$1"  2>&1 | grep rotat | head -n 1 | sed -r 's/.*([1-9][0-9]*).*$/\1/g' | awk '{ print $1 }' )
+	rot=$( ffmpeg -i "$1"  2>&1 | grep rotat | head -n 1 | sed -r 's/.* [-+]?([1-9][0-9]*).*$/\1/g' | awk '{ print $1 }' )
 	if [ -z "$rot" ] || [ $rot -eq 180 ]; then
 		echo $w $h $f
 	else
