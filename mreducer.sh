@@ -338,7 +338,14 @@ echo "..."
 # Processing all files in list ...
 echo "Processing..."
 for filename in "${listFiles[@]}"; do
-	filename=$(python -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$filename")
+    if [ -x "$(command -v python)" ]; then
+        filename=$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$filename")
+    elif  [ -x "$(command -v python3)" ]; then
+        filename=$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$filename")
+    else
+        echo "Please, install python or python3."
+        exit 1
+    fi
 	extFilename=$(echo "${filename##*.}" | tr '[:upper:]' '[:lower:]')
 	dirFilename=$(dirname "$filename")
 	baseFilename=$(basename "$filename")
